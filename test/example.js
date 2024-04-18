@@ -1,23 +1,23 @@
 function foo(a, b) {
   switch (step) {
     case 1: {
-      return "a";
+      return 'a';
     }
 
     case 2: {
-      return "b";
+      return 'b';
     }
 
     case 3: {
-      return "c";
+      return 'c';
     }
 
     case 4: {
-      return "d";
+      return 'd';
     }
 
     default: {
-      return "e";
+      return 'e';
     }
   }
 }
