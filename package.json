@@ -5,12 +5,20 @@
   "main": "src/index.js",
   "scripts": {
     "test": "jest",
-    "test:update": "jest -u"
+    "test:update": "jest -u",
+    "prettier:check": "prettier --check .",
+    "prettier:write": "prettier --write ."
   },
   "author": "",
   "license": "ISC",
   "dependencies": {
     "jest": "^29.7.0",
-    "jscodeshift": "^0.15.2"
+    "jscodeshift": "^0.15.2",
+    "prettier": "^3.2.5"
+  },
+  "prettier": {
+    "printWidth": 120,
+    "singleQuote": true,
+    "tabWidth": 2
   }
 }
