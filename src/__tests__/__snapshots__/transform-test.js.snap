@@ -1,7 +1,15 @@
 // Jest Snapshot v1, https://goo.gl/fbAQLP
 
 exports[`should work as expected 1`] = `
-"const bar = 42;
-
-const favoriteFruit = "apple";"
+"const runner = createQueryRunner(t, [query => {
+  return 'a';
+}, query => {
+  return 'b';
+}, query => {
+  return 'c';
+}, query => {
+  return 'd';
+}, query => {
+  return 'e';
+}]);"
 `;
