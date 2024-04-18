@@ -4,6 +4,8 @@
   "description": "",
   "main": "src/index.js",
   "scripts": {
+    "start": "npm run dev",
+    "dev": "node src/index.js",
     "test": "jest",
     "test:update": "jest -u",
     "prettier:check": "prettier --check .",
