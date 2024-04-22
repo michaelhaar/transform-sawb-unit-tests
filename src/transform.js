@@ -59,8 +59,8 @@ module.exports = function (fileInfo, api, options) {
     didTransformSwitchStatement = true;
   });
 
+  // add `createQueryRunner` import
   if (didTransformSwitchStatement) {
-    // add `createQueryRunner` import
     const doesHaveTestHelperImport = root.find(j.ImportDeclaration, { source: { value: 'test/helper' } }).length > 0;
     if (doesHaveTestHelperImport) {
       root.find(j.ImportDeclaration, { source: { value: 'test/helper' } }).forEach((importDeclarationPath) => {
@@ -85,6 +85,26 @@ module.exports = function (fileInfo, api, options) {
           ),
         );
     }
+  }
+
+  // fix template literals if filename is `getAddressItemsOnSite.test.js`
+  if (fileInfo.path.includes('getAddressItemsOnSite.test.js')) {
+    const templateStringRegex = /`((?:[^`\\]|\\.)*)`/g;
+
+    const originalSourceString = fileInfo.source;
+    const originalTemplateStrings = originalSourceString.match(templateStringRegex);
+
+    let updatedSourceString = root.toSource();
+    const updatedTemplateStrings = updatedSourceString.match(templateStringRegex);
+
+    if (originalTemplateStrings.length !== updatedTemplateStrings.length) {
+      throw new Error('Template strings count mismatch...');
+    }
+
+    for (let i = 0; i < originalTemplateStrings.length; i++) {
+      updatedSourceString = updatedSourceString.replace(updatedTemplateStrings[i], originalTemplateStrings[i]);
+    }
+    return updatedSourceString;
   }
 
   return root.toSource(); // return the updated source code
