@@ -5,30 +5,8 @@ module.exports = function (fileInfo, api, options) {
 
   const root = j(fileInfo.source);
 
-  // add `import { createQueryRunner } from 'test/helper';` at the top of the file
-  const doesHaveTestHelperImport = root.find(j.ImportDeclaration, { source: { value: 'test/helper' } }).length > 0;
-  if (!doesHaveTestHelperImport) {
-    root
-      .find(j.ImportDeclaration)
-      .insertBefore(
-        j.importDeclaration(
-          [j.importSpecifier(j.identifier('createQueryRunner'), j.identifier('createQueryRunner'))],
-          j.literal('test/helper'),
-        ),
-      );
-  } else {
-    root.find(j.ImportDeclaration, { source: { value: 'test/helper' } }).forEach((importDeclarationPath) => {
-      if (importDeclarationPath.value.specifiers.some((specifier) => specifier.imported.name === 'createQueryRunner')) {
-        return;
-      }
-
-      importDeclarationPath.value.specifiers.push(
-        j.importSpecifier(j.identifier('createQueryRunner'), j.identifier('createQueryRunner')),
-      );
-    });
-  }
-
   // find all `runner` variable declarations
+  let didTransformSwitchStatement = false;
   root.find(j.VariableDeclaration).forEach((runnerDeclarationPath) => {
     if (
       runnerDeclarationPath.value.declarations.length !== 1 ||
@@ -80,7 +58,36 @@ module.exports = function (fileInfo, api, options) {
     ]);
 
     j(runnerDeclarationPath).replaceWith(runnerDeclaration); // replace the `switch` statement with the updated `switch` statement
+    didTransformSwitchStatement = true;
   });
+
+  if (didTransformSwitchStatement) {
+    // add `createQueryRunner` import
+    const doesHaveTestHelperImport = root.find(j.ImportDeclaration, { source: { value: 'test/helper' } }).length > 0;
+    if (doesHaveTestHelperImport) {
+      root.find(j.ImportDeclaration, { source: { value: 'test/helper' } }).forEach((importDeclarationPath) => {
+        if (
+          importDeclarationPath.value.specifiers.some((specifier) => specifier.imported.name === 'createQueryRunner')
+        ) {
+          return;
+        }
+
+        importDeclarationPath.value.specifiers.push(
+          j.importSpecifier(j.identifier('createQueryRunner'), j.identifier('createQueryRunner')),
+        );
+      });
+    } else {
+      const importDeclarations = root.find(j.ImportDeclaration);
+      importDeclarations
+        .at(importDeclarations.size() - 1)
+        .insertAfter(
+          j.importDeclaration(
+            [j.importSpecifier(j.identifier('createQueryRunner'), j.identifier('createQueryRunner'))],
+            j.literal('test/helper'),
+          ),
+        );
+    }
+  }
 
   return root.toSource(); // return the updated source code
 };
