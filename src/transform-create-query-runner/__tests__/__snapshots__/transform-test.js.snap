@@ -1,36 +1,14 @@
-test.serial(
+// Jest Snapshot v1, https://goo.gl/fbAQLP
+
+exports[`should work as expected 1`] = `
+"test.serial(
   'CREDIT-DOCUMENT: generate billingInformationDto for logistics with connected billing group (proforma)',
   async (t) => {
     const runner = createQueryRunner(t, [
       (query) => {
-        t.is(
-          query.sql,
-          'select distinct `groups`.*, `connected_billing_groups`.`main_billing_group_id` as `_pivot_main_billing_group_id`, `connected_billing_groups`.`connected_billing_group_id` as `_pivot_connected_billing_group_id` from `groups` inner join `connected_billing_groups` on `connected_billing_groups`.`connected_billing_group_id` = `groups`.`id` where `connected_billing_groups`.`main_billing_group_id` in (?)',
-        );
-        t.deepEqual(query.bindings, ['logisticGroup']);
+        return query.response([]);
       },
       (query) => {
-        t.is(
-          query.sql,
-          'select `item_vessel_fees`.* from `item_vessel_fees` inner join `items` on `item_vessel_fees`.`item_id` = `items`.`id` inner join `orders` as `o` on `o`.`id` = `items`.`order_id` left join `addresses` as `a` on `a`.`id` = `o`.`address_id` inner join `item_products` as `ipd` on `ipd`.`item_id` = `items`.`id` inner join `item_prices` as `ip` on `ip`.`item_product_id` = `ipd`.`id` left join `item_vessel_fees_billing_documents` as `document` on `item_vessel_fees`.`id` = `document`.`item_vessel_fee_id` inner join `item_vessel_fees_groups` as `ivfg` on `item_vessel_fees`.`id` = `ivfg`.`item_vessel_fee_id` inner join `groups` as `ip_groups` on `ip`.`group_id` = `ip_groups`.`id` left join `vessels` as `v` on `v`.`id` = `items`.`vessel_id` where `item_vessel_fees`.`active` = ? and `item_vessel_fees`.`start_date` <= ? and `ipd`.`active` = ? and `ipd`.`type` in (?, ?) and `ip`.`active` is not null and `ip`.`modified_price_id` is not null and `ivfg`.`group_type` = ? and `ivfg`.`active` = ? and `ivfg`.`billable` = ? and `items`.`status` <> ? and (`document`.`item_vessel_fee_id` is null or item_vessel_fees.id NOT IN ((select `item_vessel_fee_id` from `item_vessel_fees_billing_documents` where `active` = ? and `item_vessel_fee_id` is not null and `billing_document_type_id` in (?)))) and `ip_groups`.`type` in (?, ?) and (`v`.`group_id` = ? or `items`.`vessel_id` is null and `ip_groups`.`id` = ?)',
-        );
-        t.deepEqual(query.bindings, [
-          1,
-          '2020-07-31',
-          1,
-          'waste',
-          'vessel_delivery',
-          'partner',
-          1,
-          1,
-          90,
-          1,
-          4,
-          'logistics',
-          'partner',
-          'logisticGroup',
-          'logisticGroup',
-        ]);
         return query.response([
           {
             id: 'vesselFeeId',
@@ -41,8 +19,6 @@ test.serial(
         ]);
       },
       (query) => {
-        t.is(query.sql, 'select distinct `items`.* from `items` where `items`.`id` in (?)');
-        t.deepEqual(query.bindings, ['anotherItemId']);
         return query.response([
           {
             id: 'anotherItemId',
@@ -54,11 +30,6 @@ test.serial(
         ]);
       },
       (query) => {
-        t.is(
-          query.sql,
-          'select distinct `item_vessel_fees_groups`.* from `item_vessel_fees_groups` where `active` = ? and `item_vessel_fees_groups`.`item_vessel_fee_id` in (?)',
-        );
-        t.deepEqual(query.bindings, [1, 'vesselFeeId']);
         return query.response([
           {
             id: 1,
@@ -67,18 +38,12 @@ test.serial(
         ]);
       },
       (query) => {
-        t.is(query.sql, 'select distinct `users`.* from `users` where `users`.`id` in (?)');
-        t.deepEqual(query.bindings, ['anotherPartnerId']);
         return query.response([{ id: 'anotherPartnerId' }]);
       },
       (query) => {
-        t.is(query.sql, 'select distinct `users`.* from `users` where `users`.`id` in (?)');
-        t.deepEqual(query.bindings, ['userId']);
         return query.response([{ id: 'userId' }]);
       },
       (query) => {
-        t.is(query.sql, 'select distinct `vessels`.* from `vessels` where `vessels`.`id` in (?)');
-        t.deepEqual(query.bindings, ['vesselId']);
         return query.response([
           {
             id: 'vesselId',
@@ -87,7 +52,7 @@ test.serial(
         ]);
       },
       {
-        sql: 'select distinct `item_products`.* from `item_products` where `active` = ? and `is_main_fraction` = ? and `item_products`.`item_id` in (?)',
+        sql: 'select distinct \`item_products\`.* from \`item_products\` where \`active\` = ? and \`is_main_fraction\` = ? and \`item_products\`.\`item_id\` in (?)',
         bindings: [1, 1, 'anotherItemId'],
         response: [
           {
@@ -100,11 +65,6 @@ test.serial(
         ],
       },
       (query) => {
-        t.is(
-          query.sql,
-          'select distinct `groups`.*, `groups_users`.`user_id` as `_pivot_user_id`, `groups_users`.`group_id` as `_pivot_group_id` from `groups` inner join `groups_users` on `groups_users`.`group_id` = `groups`.`id` where `groups_users`.`user_id` in (?)',
-        );
-        t.deepEqual(query.bindings, ['anotherPartnerId']);
         return query.response([
           {
             id: 'anotherPartnerGroupId',
@@ -113,11 +73,6 @@ test.serial(
         ]);
       },
       (query) => {
-        t.is(
-          query.sql,
-          'select distinct `groups`.*, `groups_users`.`user_id` as `_pivot_user_id`, `groups_users`.`group_id` as `_pivot_group_id` from `groups` inner join `groups_users` on `groups_users`.`group_id` = `groups`.`id` where `groups_users`.`user_id` in (?)',
-        );
-        t.deepEqual(query.bindings, ['userId']);
         return query.response([
           {
             id: 'userGroupId',
@@ -126,8 +81,6 @@ test.serial(
         ]);
       },
       (query) => {
-        t.is(query.sql, 'select distinct `groups`.* from `groups` where `groups`.`id` in (?)');
-        t.deepEqual(query.bindings, ['logisticGroup']);
         return query.response([
           {
             id: 'logisticGroup',
@@ -136,11 +89,6 @@ test.serial(
         ]);
       },
       (query) => {
-        t.is(
-          query.sql,
-          'select distinct `item_prices`.* from `item_prices` where `active` is not null and `item_prices`.`item_product_id` in (?)',
-        );
-        t.deepEqual(query.bindings, ['anotherItemProductId']);
         return query.response([
           {
             id: 'anotherItemPriceId',
@@ -153,11 +101,6 @@ test.serial(
         ]);
       },
       (query) => {
-        t.is(
-          query.sql,
-          'select distinct `groups_tax_rates`.* from `groups_tax_rates` where `groups_tax_rates`.`group_id` in (?)',
-        );
-        t.deepEqual(query.bindings, ['anotherPartnerGroupId']);
         return query.response([
           {
             id: 2,
@@ -169,11 +112,6 @@ test.serial(
         ]);
       },
       (query) => {
-        t.is(
-          query.sql,
-          'select distinct `groups_tax_rates`.* from `groups_tax_rates` where `groups_tax_rates`.`group_id` in (?)',
-        );
-        t.deepEqual(query.bindings, ['userGroupId']);
         return query.response([
           {
             id: 3,
@@ -185,11 +123,6 @@ test.serial(
         ]);
       },
       (query) => {
-        t.is(
-          query.sql,
-          'select distinct `groups_tax_rates`.* from `groups_tax_rates` where `groups_tax_rates`.`group_id` in (?)',
-        );
-        t.deepEqual(query.bindings, ['logisticGroup']);
         return query.response([
           {
             id: 2,
@@ -201,8 +134,6 @@ test.serial(
         ]);
       },
       (query) => {
-        t.is(query.sql, 'select distinct `prices`.* from `prices` where `prices`.`id` in (?)');
-        t.deepEqual(query.bindings, ['anotherModifiedPriceId']);
         return query.response([
           {
             id: 'anotherModifiedPriceId',
@@ -215,8 +146,6 @@ test.serial(
         ]);
       },
       (query) => {
-        t.is(query.sql, 'select distinct `groups`.* from `groups` where `groups`.`id` in (?)');
-        t.deepEqual(query.bindings, ['anotherPartnerGroupId']);
         return query.response([
           {
             id: 'anotherPartnerGroupId',
@@ -225,11 +154,6 @@ test.serial(
         ]);
       },
       (query) => {
-        t.is(
-          query.sql,
-          'select distinct `groups_tax_rates`.* from `groups_tax_rates` where `groups_tax_rates`.`group_id` in (?)',
-        );
-        t.deepEqual(query.bindings, ['anotherPartnerGroupId']);
         return query.response([
           {
             id: 2,
@@ -328,4 +252,5 @@ test.serial(
       t.is(v.get('id'), itemVesselFee.get('id'));
     });
   },
-);
+);"
+`;
