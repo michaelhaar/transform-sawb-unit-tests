@@ -34,17 +34,15 @@ module.exports = function (fileInfo, api, options) {
     // loop through each `case` statements
     const arrayExpression = j.arrayExpression(
       switchStatementPath.value.cases
-        .map((caseStatement) => {
-          if (caseStatement.consequent.length !== 1 || caseStatement.consequent[0].type !== 'BlockStatement') {
-            throw new Error('Invalid case statement found...');
-          }
-
+        .map((caseStatement, index) => {
           const isDefaultCase = caseStatement.test === null;
           if (isDefaultCase) {
             return;
           }
 
-          return j.arrowFunctionExpression([j.identifier('query')], caseStatement.consequent[0]);
+          const consequent = getSwitchCaseConsequent(switchStatementPath.value.cases, index);
+
+          return j.arrowFunctionExpression([j.identifier('query')], consequent[0]);
         })
         .filter(Boolean),
     );
@@ -91,3 +89,18 @@ module.exports = function (fileInfo, api, options) {
 
   return root.toSource(); // return the updated source code
 };
+
+// needed to handle fall-through cases
+// see: https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Statements/switch#taking_advantage_of_fall-through
+function getSwitchCaseConsequent(cases, index) {
+  const caseStatement = cases[index];
+  if (caseStatement.consequent.length === 1 && caseStatement.consequent[0].type === 'BlockStatement') {
+    return caseStatement.consequent;
+  }
+
+  if (caseStatement.consequent.length === 0) {
+    return getSwitchCaseConsequent(cases, index + 1);
+  }
+
+  throw new Error('Invalid case statement found...');
+}
