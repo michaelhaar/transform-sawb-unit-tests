@@ -6,8 +6,8 @@
   "scripts": {
     "start:transform-switch-statements": "node src/transform-switch-statements/index.js",
     "start:transform-create-query-runner": "node src/transform-create-query-runner/index.js",
-    "test": "jest",
-    "test:update": "jest -u",
+    "test": "jest ./src/transform-create-query-runner",
+    "test:update": "npm run test -- -u",
     "prettier:check": "prettier --check .",
     "prettier:write": "prettier --write ."
   },
