@@ -1,7 +1,9 @@
 // Jest Snapshot v1, https://goo.gl/fbAQLP
 
 exports[`should work as expected 1`] = `
-"const runner = createQueryRunner(t, [query => {
+"import { createQueryRunner } from "test/helper";
+
+const runner = createQueryRunner(t, [query => {
   return 'a';
 }, query => {
   return 'b';
@@ -13,7 +15,8 @@ exports[`should work as expected 1`] = `
 `;
 
 exports[`should work as expected 2`] = `
-"test.serial('getPartnerVessels no vessels (SQL TEST)', async (t) => {
+"import { createQueryRunner } from "test/helper";
+test.serial('getPartnerVessels no vessels (SQL TEST)', async (t) => {
   const groupUuid = '11111111-1111-1111-1111-111111111111';
   const runner = createQueryRunner(t, [query => {
     t.is(query.method, 'select');

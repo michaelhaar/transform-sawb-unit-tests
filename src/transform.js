@@ -76,19 +76,21 @@ module.exports = function (fileInfo, api, options) {
       });
     } else {
       const importDeclarations = root.find(j.ImportDeclaration);
-      importDeclarations
-        .at(importDeclarations.size() - 1)
-        .insertAfter(
-          j.importDeclaration(
-            [j.importSpecifier(j.identifier('createQueryRunner'), j.identifier('createQueryRunner'))],
-            j.literal('test/helper'),
-          ),
-        );
+      const createQueryRunnerImportDeclaration = j.importDeclaration(
+        [j.importSpecifier(j.identifier('createQueryRunner'), j.identifier('createQueryRunner'))],
+        j.literal('test/helper'),
+      );
+
+      if (importDeclarations.length === 0) {
+        root.get().node.program.body.unshift(createQueryRunnerImportDeclaration);
+      }
+
+      importDeclarations.at(importDeclarations.size() - 1).insertAfter(createQueryRunnerImportDeclaration);
     }
   }
 
   // fix template literals if filename is `getAddressItemsOnSite.test.js`
-  if (fileInfo.path.includes('getAddressItemsOnSite.test.js')) {
+  if (fileInfo.path?.includes('getAddressItemsOnSite.test.js')) {
     const templateStringRegex = /`((?:[^`\\]|\\.)*)`/g;
 
     const originalSourceString = fileInfo.source;
