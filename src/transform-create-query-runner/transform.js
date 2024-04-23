@@ -12,7 +12,11 @@ module.exports = function (fileInfo, api, options) {
   const root = j(fileInfo.source);
 
   // find all `const runner = createQueryRunner(t, [` variable declarations
-  updateCreateQueryRunnerStatements(j, root);
+  const didTransform = updateCreateQueryRunnerStatements(j, root);
+
+  if (didTransform) {
+    addStubUuidAndTimersImport(j, root);
+  }
 
   return root.toSource(); // return the updated source code
 };
@@ -41,9 +45,12 @@ module.exports = function (fileInfo, api, options) {
  *
  * @param {import('jscodeshift').JSCodeshift} j - The jscodeshift API.
  * @param {import('jscodeshift').Collection<any>} root - The root node of the AST.
+ * @returns {boolean} `true` AST has been updated, `false` otherwise.
  *
  */
 function updateCreateQueryRunnerStatements(j, root) {
+  let didTransform = false;
+
   // 1. find all `const runner = createQueryRunner(t, [` variable declarations
   root.find(j.VariableDeclaration).forEach((runnerDeclarationPath) => {
     if (
@@ -95,8 +102,11 @@ function updateCreateQueryRunnerStatements(j, root) {
       } else {
         element.body = j.blockStatement([j.returnStatement(getDefaultQueryResponse(j))]);
       }
+      didTransform = true;
     });
   });
+
+  return didTransform;
 }
 
 /**
@@ -106,4 +116,42 @@ function updateCreateQueryRunnerStatements(j, root) {
  */
 function getDefaultQueryResponse(j) {
   return j.callExpression(j.identifier('query.response'), [j.arrayExpression([])]);
+}
+
+/**
+ * add `import { restoreUuidAndTimers, stubUuidAndTimers } from 'test/helper';` after last import statement
+ * @param {import('jscodeshift').JSCodeshift} j
+ * @param {import('jscodeshift').Collection<any>} root
+ */
+function addStubUuidAndTimersImport(j, root) {
+  let doesHaveTestHelperImport = false;
+
+  root.find(j.ImportDeclaration).forEach((importDeclarationPath) => {
+    if (importDeclarationPath.value.source.value === 'test/helper') {
+      doesHaveTestHelperImport = true;
+
+      const { specifiers } = importDeclarationPath.value;
+      if (specifiers.every((specifier) => specifier.imported.name !== 'restoreUuidAndTimers')) {
+        specifiers.push(j.importSpecifier(j.identifier('restoreUuidAndTimers')));
+      }
+
+      if (specifiers.every((specifier) => specifier.imported.name !== 'stubUuidAndTimers')) {
+        specifiers.push(j.importSpecifier(j.identifier('stubUuidAndTimers')));
+      }
+    }
+  });
+
+  if (!doesHaveTestHelperImport) {
+    const stubUuidAndTimersImport = j.importDeclaration(
+      [j.importSpecifier(j.identifier('restoreUuidAndTimers')), j.importSpecifier(j.identifier('stubUuidAndTimers'))],
+      j.literal('test/helper'),
+    );
+
+    const importDeclaration = root.find(j.ImportDeclaration);
+    if (importDeclaration.length === 0) {
+      root.get().node.program.body.unshift(stubUuidAndTimersImport);
+    } else {
+      importDeclaration.at(-1).insertAfter(stubUuidAndTimersImport);
+    }
+  }
 }

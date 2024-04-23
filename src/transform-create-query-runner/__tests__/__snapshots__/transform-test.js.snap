@@ -1,7 +1,8 @@
 // Jest Snapshot v1, https://goo.gl/fbAQLP
 
 exports[`should work as expected 1`] = `
-"test.serial(
+"import { restoreUuidAndTimers, stubUuidAndTimers } from "test/helper";
+test.serial(
   'CREDIT-DOCUMENT: generate billingInformationDto for logistics with connected billing group (proforma)',
   async (t) => {
     const runner = createQueryRunner(t, [
@@ -250,7 +251,7 @@ exports[`should work as expected 1`] = `
 
 exports[`should work as expected 2`] = `
 "import { getAddresses } from 'controllers/Addresses/getAddresses';
-import { mockHelper, createQueryRunner } from 'test/helper';
+import { mockHelper, createQueryRunner, restoreUuidAndTimers, stubUuidAndTimers } from 'test/helper';
 import mockKnex from 'mock-knex';
 import test from 'ava';
 
