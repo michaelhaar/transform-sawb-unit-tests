@@ -9,17 +9,10 @@ exports[`should work as expected 1`] = `
         return query.response([]);
       },
       (query) => {
-        query.response([
-          {
-            id: 'vesselFeeId',
-            item_id: 'anotherItemId',
-            start_date: '2020-07-01',
-            end_date: null,
-          },
-        ]);
+        return query.response([]);
       },
       (query) => {
-        query.response([
+        return query.response([
           {
             id: 'anotherItemId',
             type: orderType.delivery,
@@ -30,7 +23,7 @@ exports[`should work as expected 1`] = `
         ]);
       },
       (query) => {
-        query.response([
+        return query.response([
           {
             id: 1,
             vessel_id: 'vesselId',
@@ -38,13 +31,13 @@ exports[`should work as expected 1`] = `
         ]);
       },
       (query) => {
-        query.response([{ id: 'anotherPartnerId' }]);
+        return query.response([{ id: 'anotherPartnerId' }]);
       },
       (query) => {
-        query.response([{ id: 'userId' }]);
+        return query.response([{ id: 'userId' }]);
       },
       (query) => {
-        query.response([
+        return query.response([
           {
             id: 'vesselId',
             group_id: 'logisticGroup',
@@ -65,7 +58,7 @@ exports[`should work as expected 1`] = `
         ],
       },
       (query) => {
-        query.response([
+        return query.response([
           {
             id: 'anotherPartnerGroupId',
             type: groupType.PARTNER,
@@ -73,7 +66,7 @@ exports[`should work as expected 1`] = `
         ]);
       },
       (query) => {
-        query.response([
+        return query.response([
           {
             id: 'userGroupId',
             type: groupType.CUSTOMER,
@@ -81,7 +74,7 @@ exports[`should work as expected 1`] = `
         ]);
       },
       (query) => {
-        query.response([
+        return query.response([
           {
             id: 'logisticGroup',
             type: groupType.LOGISTICS,
@@ -89,7 +82,7 @@ exports[`should work as expected 1`] = `
         ]);
       },
       (query) => {
-        query.response([
+        return query.response([
           {
             id: 'anotherItemPriceId',
             item_price_id: 'anotherItemProductId',
@@ -101,7 +94,7 @@ exports[`should work as expected 1`] = `
         ]);
       },
       (query) => {
-        query.response([
+        return query.response([
           {
             id: 2,
             tax_rate_id: 2,
@@ -112,7 +105,7 @@ exports[`should work as expected 1`] = `
         ]);
       },
       (query) => {
-        query.response([
+        return query.response([
           {
             id: 3,
             tax_rate_id: 3,
@@ -123,7 +116,7 @@ exports[`should work as expected 1`] = `
         ]);
       },
       (query) => {
-        query.response([
+        return query.response([
           {
             id: 2,
             tax_rate_id: 2,
@@ -134,7 +127,7 @@ exports[`should work as expected 1`] = `
         ]);
       },
       (query) => {
-        query.response([
+        return query.response([
           {
             id: 'anotherModifiedPriceId',
             type: priceTypes.weight,
@@ -146,7 +139,7 @@ exports[`should work as expected 1`] = `
         ]);
       },
       (query) => {
-        query.response([
+        return query.response([
           {
             id: 'anotherPartnerGroupId',
             type: groupType.PARTNER,
@@ -154,7 +147,7 @@ exports[`should work as expected 1`] = `
         ]);
       },
       (query) => {
-        query.response([
+        return query.response([
           {
             id: 2,
             tax_rate_id: 2,
@@ -253,4 +246,103 @@ exports[`should work as expected 1`] = `
     });
   },
 );"
+`;
+
+exports[`should work as expected 2`] = `
+"import { getAddresses } from 'controllers/Addresses/getAddresses';
+import { mockHelper, createQueryRunner } from 'test/helper';
+import mockKnex from 'mock-knex';
+import test from 'ava';
+
+test.beforeEach((t) => {
+  t.context.tracker = mockKnex.getTracker();
+  t.context.tracker.install();
+});
+
+test.afterEach.always((t) => {
+  t.context.tracker.uninstall();
+});
+
+test.serial('getAddresses: should not return addresses, when not logged in', async (t) => {
+  const req = {
+    swagger: {
+      params: {
+        lat: { value: 15 },
+        long: { value: 16 },
+      },
+    },
+  };
+  await t.notThrows(() => {
+    getAddresses({ req });
+  });
+});
+
+test.serial('getAddresses: should return addresses, when logged in', async (t) => {
+  const runner = createQueryRunner(t, [
+    (query) =>
+      // select users
+      query.response([
+        {
+          id: 1,
+          first_name: 'Seppl',
+          last_name: 'Huaba',
+        },
+      ]),
+    (query) =>
+      // select addresses
+      query.response([
+        {
+          id: 20,
+          address: 'Hans-Roth-Straße',
+          building_number: 1,
+          postal: '8073',
+          city: 'Feldkirchen bei Graz',
+          _pivot_user_id: 1,
+        },
+        {
+          id: 26,
+          address: 'Stracke Creek',
+          building_number: 30,
+          postal: '8705',
+          city: 'Rohanside',
+          _pivot_user_id: 1,
+        },
+        {
+          id: 31,
+          address: 'Cummings Light',
+          building_number: 39,
+          postal: '8668',
+          city: 'Lake Margot',
+          _pivot_user_id: 1,
+        },
+      ]),
+    (query) => {
+      return query.response([]);
+    },
+  ]);
+
+  t.context.tracker.on('query', runner);
+
+  const req = {
+    swagger: {
+      params: {
+        lat: { value: 15 },
+        long: { value: 16 },
+      },
+    },
+  };
+  const { user } = mockHelper({
+    user: {
+      id: 1,
+      first_name: 'Seppl',
+      last_name: 'Huaba',
+    },
+  });
+
+  const result = await getAddresses({ req, user });
+  t.is(result.user.get('id'), 1);
+  t.is(result.req.swagger.params.lat.value, 15);
+  t.is(result.addresses.length, 3);
+  t.is(result.addresses.at(0).get('address'), 'Hans-Roth-Straße');
+});"
 `;

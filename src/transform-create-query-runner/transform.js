@@ -31,20 +31,30 @@ module.exports = function (fileInfo, api, options) {
     // loop through all elements in the array expression
     arrayExpression.elements.forEach((element) => {
       if (element.type === 'ArrowFunctionExpression') {
-        // find query.response call expressions
-        const queryResponseCollection = j(element.body).find(j.CallExpression, {
-          callee: { object: { name: 'query' }, property: { name: 'response' } },
-        });
+        // check if the arrow function is `query => query.response(...)` and return if it is
+        if (
+          element.body.type === 'CallExpression' &&
+          element.body.callee.object.name === 'query' &&
+          element.body.callee.property.name === 'response'
+        ) {
+          return;
+        }
 
-        if (queryResponseCollection.length === 0) {
+        if (element.body.type !== 'BlockStatement') {
+          throw new Error('Invalid arrow function body found...');
+        }
+
+        // find query.response call expressions
+        const returnStatementCollection = j(element.body).find(j.ReturnStatement);
+
+        if (returnStatementCollection.length === 0) {
           // return `query.response([])`
           element.body = j.blockStatement([
             j.returnStatement(j.callExpression(j.identifier('query.response'), [j.arrayExpression([])])),
           ]);
         } else {
           // return the last `query.response` call expression
-          const lastQueryResponseCallExpression = queryResponseCollection.paths().pop();
-          element.body = j.blockStatement([j.expressionStatement(lastQueryResponseCallExpression.value)]);
+          element.body = j.blockStatement([returnStatementCollection.paths()[0].value]);
         }
       }
     });
