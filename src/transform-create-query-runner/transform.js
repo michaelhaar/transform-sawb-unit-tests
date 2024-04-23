@@ -12,11 +12,7 @@ module.exports = function (fileInfo, api, options) {
   const root = j(fileInfo.source);
 
   // find all `const runner = createQueryRunner(t, [` variable declarations
-  const didTransform = updateCreateQueryRunnerStatements(j, root);
-
-  if (!didTransform) {
-    return;
-  }
+  updateCreateQueryRunnerStatements(j, root);
 
   addStubUuidAndTimersImport(j, root);
   updateBeforeEachMethod(j, root, fileInfo.path);
@@ -52,8 +48,6 @@ module.exports = function (fileInfo, api, options) {
  *
  */
 function updateCreateQueryRunnerStatements(j, root) {
-  let didTransform = false;
-
   // 1. find all `const runner = createQueryRunner(t, [` variable declarations
   root.find(j.VariableDeclaration).forEach((runnerDeclarationPath) => {
     if (
@@ -71,7 +65,7 @@ function updateCreateQueryRunnerStatements(j, root) {
     }
     const callExpressionPath = callExpressionCollection.paths()[0];
     if (callExpressionPath.value.callee.name !== 'createQueryRunner') {
-      throw new Error('Variable declaration is not `const runner = createQueryRunner(...)`.');
+      return;
     }
 
     const arrayExpression = callExpressionPath.value.arguments[1];
@@ -105,11 +99,8 @@ function updateCreateQueryRunnerStatements(j, root) {
       } else {
         element.body = j.blockStatement([j.returnStatement(getDefaultQueryResponse(j))]);
       }
-      didTransform = true;
     });
   });
-
-  return didTransform;
 }
 
 /**
@@ -178,10 +169,6 @@ function updateBeforeEachMethod(j, root, filePath) {
     },
   });
 
-  if (selectedTestLifeCycleCallExpression.length === 0) {
-    throw new Error('No `test.beforeEach` method found.');
-  }
-
   const noTimerMockPaths = ['startSingleBillingRun.test.js'];
   const noTimerMock = noTimerMockPaths.map((noTimerMockPath) => filePath.includes(noTimerMockPath)).some(Boolean);
 
@@ -222,10 +209,6 @@ function updateAfterEachAlwaysMethod(j, root) {
     },
   });
 
-  if (afterEachCallExpression.length === 0 && afterEachAlwaysCallExpression.length === 0) {
-    throw new Error('No `test.afterEach` or `test.afterEach.always` methods found.');
-  }
-
   addFunctionToTestLifeCycleCallExpression(j, afterEachCallExpression, 'restoreUuidAndTimers');
   addFunctionToTestLifeCycleCallExpression(j, afterEachAlwaysCallExpression, 'restoreUuidAndTimers');
 }
@@ -248,7 +231,11 @@ function addFunctionToTestLifeCycleCallExpression(j, testLifeCycleCallExpression
     if (body.some((statement) => statement.expression?.callee?.name === functionNameToInsert)) {
       return;
     }
-    body.push(stubUuidAndTimersCallExpression);
+    body.unshift(stubUuidAndTimersCallExpression);
+    // make sure argumentFunction take t as argument
+    if (argumentFunction.params.length === 0) {
+      argumentFunction.params.push(j.identifier('t'));
+    }
   });
 }
 
