@@ -31,7 +31,7 @@ test.serial(
           'logisticGroup',
           'logisticGroup',
         ]);
-        return query.response([
+        query.response([
           {
             id: 'vesselFeeId',
             item_id: 'anotherItemId',

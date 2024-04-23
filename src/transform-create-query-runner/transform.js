@@ -31,15 +31,20 @@ module.exports = function (fileInfo, api, options) {
     // loop through all elements in the array expression
     arrayExpression.elements.forEach((element) => {
       if (element.type === 'ArrowFunctionExpression') {
-        // find return statement
-        const returnStatementCollection = j(element.body).find(j.ReturnStatement);
-        if (returnStatementCollection.length === 0) {
-          // return query.response([]);
+        // find query.response call expressions
+        const queryResponseCollection = j(element.body).find(j.CallExpression, {
+          callee: { object: { name: 'query' }, property: { name: 'response' } },
+        });
+
+        if (queryResponseCollection.length === 0) {
+          // return `query.response([])`
           element.body = j.blockStatement([
             j.returnStatement(j.callExpression(j.identifier('query.response'), [j.arrayExpression([])])),
           ]);
         } else {
-          element.body = j.blockStatement([returnStatementCollection.paths()[0].value]);
+          // return the last `query.response` call expression
+          const lastQueryResponseCallExpression = queryResponseCollection.paths().pop();
+          element.body = j.blockStatement([j.expressionStatement(lastQueryResponseCallExpression.value)]);
         }
       }
     });
