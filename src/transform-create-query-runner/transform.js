@@ -19,7 +19,7 @@ module.exports = function (fileInfo, api, options) {
   }
 
   addStubUuidAndTimersImport(j, root);
-  updateBeforeEachMethod(j, root);
+  updateBeforeEachMethod(j, root, fileInfo.path);
   updateAfterEachAlwaysMethod(j, root);
   return updateTestCallExpressions(root.toSource());
 };
@@ -164,8 +164,9 @@ function addStubUuidAndTimersImport(j, root) {
  *
  * @param {import('jscodeshift').JSCodeshift} j - The jscodeshift API.
  * @param {import('jscodeshift').Collection<any>} root - The root node of the AST.
+ * @param {string} filePath - The path of the file being transformed.
  */
-function updateBeforeEachMethod(j, root) {
+function updateBeforeEachMethod(j, root, filePath) {
   const selectedTestLifeCycleCallExpression = root.find(j.CallExpression, {
     callee: {
       object: {
@@ -181,7 +182,10 @@ function updateBeforeEachMethod(j, root) {
     throw new Error('No `test.beforeEach` method found.');
   }
 
-  addFunctionToTestLifeCycleCallExpression(j, selectedTestLifeCycleCallExpression, 'stubUuidAndTimers');
+  const noTimerMockPaths = ['startSingleBillingRun.test.js'];
+  const noTimerMock = noTimerMockPaths.map((noTimerMockPath) => filePath.includes(noTimerMockPath)).some(Boolean);
+
+  addFunctionToTestLifeCycleCallExpression(j, selectedTestLifeCycleCallExpression, 'stubUuidAndTimers', noTimerMock);
 }
 
 /**
@@ -226,13 +230,17 @@ function updateAfterEachAlwaysMethod(j, root) {
   addFunctionToTestLifeCycleCallExpression(j, afterEachAlwaysCallExpression, 'restoreUuidAndTimers');
 }
 
-function addFunctionToTestLifeCycleCallExpression(j, testLifeCycleCallExpression, functionNameToInsert) {
+/**
+ * @param {import('jscodeshift').JSCodeshift} j - The jscodeshift API.
+ */
+function addFunctionToTestLifeCycleCallExpression(j, testLifeCycleCallExpression, functionNameToInsert, noTimerMock) {
   testLifeCycleCallExpression.forEach((callExpressionPath) => {
     const argumentFunction = callExpressionPath.value.arguments[0];
 
     const stubUuidAndTimersCallExpression = j.expressionStatement(
       j.callExpression(j.identifier(functionNameToInsert), [
         j.memberExpression(j.identifier('t'), j.identifier('context')),
+        ...(noTimerMock ? [j.literal(false)] : []),
       ]),
     );
 
