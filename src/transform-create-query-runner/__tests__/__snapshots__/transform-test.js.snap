@@ -258,10 +258,12 @@ import test from 'ava';
 test.beforeEach((t) => {
   t.context.tracker = mockKnex.getTracker();
   t.context.tracker.install();
+  stubUuidAndTimers(t.context);
 });
 
 test.afterEach.always((t) => {
   t.context.tracker.uninstall();
+  restoreUuidAndTimers(t.context);
 });
 
 test.serial('getAddresses: should not return addresses, when not logged in', async (t) => {
