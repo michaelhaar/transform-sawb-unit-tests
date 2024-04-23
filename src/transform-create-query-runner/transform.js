@@ -14,13 +14,14 @@ module.exports = function (fileInfo, api, options) {
   // find all `const runner = createQueryRunner(t, [` variable declarations
   const didTransform = updateCreateQueryRunnerStatements(j, root);
 
-  if (didTransform) {
-    addStubUuidAndTimersImport(j, root);
-    updateBeforeEachMethod(j, root);
-    updateAfterEachAlwaysMethod(j, root);
+  if (!didTransform) {
+    return;
   }
 
-  return root.toSource(); // return the updated source code
+  addStubUuidAndTimersImport(j, root);
+  updateBeforeEachMethod(j, root);
+  updateAfterEachAlwaysMethod(j, root);
+  return updateTestCallExpressions(root.toSource());
 };
 
 /**
@@ -241,4 +242,13 @@ function addFunctionToTestLifeCycleCallExpression(j, testLifeCycleCallExpression
     }
     body.push(stubUuidAndTimersCallExpression);
   });
+}
+
+/**
+ * Change all `test` call expressions to `test.serial`.
+ * @param {string} source - The source code to transform.
+ */
+
+function updateTestCallExpressions(source) {
+  return source.replace(/test\(/g, 'test.serial(');
 }

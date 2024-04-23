@@ -1,104 +1,260 @@
 // Jest Snapshot v1, https://goo.gl/fbAQLP
 
 exports[`should work as expected 1`] = `
-"import { getAddresses } from 'controllers/Addresses/getAddresses';
-import { mockHelper, createQueryRunner, restoreUuidAndTimers, stubUuidAndTimers } from 'test/helper';
-import mockKnex from 'mock-knex';
-import test from 'ava';
-
+"import { restoreUuidAndTimers, stubUuidAndTimers } from "test/helper";
 test.beforeEach((t) => {
-  t.context.tracker = mockKnex.getTracker();
-  t.context.tracker.install();
   stubUuidAndTimers(t.context);
 });
 
 test.afterEach.always((t) => {
-  t.context.tracker.uninstall();
   restoreUuidAndTimers(t.context);
 });
 
-test.serial('getAddresses: should not return addresses, when not logged in', async (t) => {
-  const req = {
-    swagger: {
-      params: {
-        lat: { value: 15 },
-        long: { value: 16 },
+test.serial(
+  'CREDIT-DOCUMENT: generate billingInformationDto for logistics with connected billing group (proforma)',
+  async (t) => {
+    const runner = createQueryRunner(t, [
+      (query) => {
+        return query.response([]);
       },
-    },
-  };
-  await t.notThrows(() => {
-    getAddresses({ req });
-  });
-});
-
-test.serial('getAddresses: should return addresses, when logged in', async (t) => {
-  const runner = createQueryRunner(t, [
-    (query) =>
-      // select users
-      query.response([
-        {
-          id: 1,
-          first_name: 'Seppl',
-          last_name: 'Huaba',
-        },
-      ]),
-    (query) =>
-      // select addresses
-      query.response([
-        {
-          id: 20,
-          address: 'Hans-Roth-Straße',
-          building_number: 1,
-          postal: '8073',
-          city: 'Feldkirchen bei Graz',
-          _pivot_user_id: 1,
-        },
-        {
-          id: 26,
-          address: 'Stracke Creek',
-          building_number: 30,
-          postal: '8705',
-          city: 'Rohanside',
-          _pivot_user_id: 1,
-        },
-        {
-          id: 31,
-          address: 'Cummings Light',
-          building_number: 39,
-          postal: '8668',
-          city: 'Lake Margot',
-          _pivot_user_id: 1,
-        },
-      ]),
-    (query) => {
-      return query.response([]);
-    },
-  ]);
-
-  t.context.tracker.on('query', runner);
-
-  const req = {
-    swagger: {
-      params: {
-        lat: { value: 15 },
-        long: { value: 16 },
+      (query) => {
+        return query.response([]);
       },
-    },
-  };
-  const { user } = mockHelper({
-    user: {
-      id: 1,
-      first_name: 'Seppl',
-      last_name: 'Huaba',
-    },
-  });
+      (query) => {
+        return query.response([
+          {
+            id: 'anotherItemId',
+            type: orderType.delivery,
+            partner_id: 'anotherPartnerId',
+            user_id: 'userId',
+            vessel_id: 'vesselId',
+          },
+        ]);
+      },
+      (query) => {
+        return query.response([
+          {
+            id: 1,
+            vessel_id: 'vesselId',
+          },
+        ]);
+      },
+      (query) => {
+        return query.response([{ id: 'anotherPartnerId' }]);
+      },
+      (query) => {
+        return query.response([{ id: 'userId' }]);
+      },
+      (query) => {
+        return query.response([
+          {
+            id: 'vesselId',
+            group_id: 'logisticGroup',
+          },
+        ]);
+      },
+      {
+        sql: 'select distinct \`item_products\`.* from \`item_products\` where \`active\` = ? and \`is_main_fraction\` = ? and \`item_products\`.\`item_id\` in (?)',
+        bindings: [1, 1, 'anotherItemId'],
+        response: [
+          {
+            id: 'anotherItemProductId',
+            item_id: 'anotherItemId',
+            active: 1,
+            is_main_fraction: 1,
+            product_id: 'productId',
+          },
+        ],
+      },
+      (query) => {
+        return query.response([
+          {
+            id: 'anotherPartnerGroupId',
+            type: groupType.PARTNER,
+          },
+        ]);
+      },
+      (query) => {
+        return query.response([
+          {
+            id: 'userGroupId',
+            type: groupType.CUSTOMER,
+          },
+        ]);
+      },
+      (query) => {
+        return query.response([
+          {
+            id: 'logisticGroup',
+            type: groupType.LOGISTICS,
+          },
+        ]);
+      },
+      (query) => {
+        return query.response([
+          {
+            id: 'anotherItemPriceId',
+            item_price_id: 'anotherItemProductId',
+            item_id: 'anotherItemId',
+            origin_price_id: 'origin_price_id',
+            modified_price_id: 'anotherModifiedPriceId',
+            group_id: 'anotherPartnerGroupId',
+          },
+        ]);
+      },
+      (query) => {
+        return query.response([
+          {
+            id: 2,
+            tax_rate_id: 2,
+            group_id: 'anotherPartnerGroupId',
+            valid_from: '2000-01-01 00:00:00',
+            valid_to: '2030-01-01 00:00:00',
+          },
+        ]);
+      },
+      (query) => {
+        return query.response([
+          {
+            id: 3,
+            tax_rate_id: 3,
+            group_id: 'userGroupId',
+            valid_from: '2000-01-01 00:00:00',
+            valid_to: '2030-01-01 00:00:00',
+          },
+        ]);
+      },
+      (query) => {
+        return query.response([
+          {
+            id: 2,
+            tax_rate_id: 2,
+            group_id: 'logisticGroup',
+            valid_from: '2000-01-01 00:00:00',
+            valid_to: '2030-01-01 00:00:00',
+          },
+        ]);
+      },
+      (query) => {
+        return query.response([
+          {
+            id: 'anotherModifiedPriceId',
+            type: priceTypes.weight,
+            product_id: 'productId',
+            delivery_price: 50,
+            retrieval_price: 70,
+            fee_per_day: 0.7,
+          },
+        ]);
+      },
+      (query) => {
+        return query.response([
+          {
+            id: 'anotherPartnerGroupId',
+            type: groupType.PARTNER,
+          },
+        ]);
+      },
+      (query) => {
+        return query.response([
+          {
+            id: 2,
+            tax_rate_id: 2,
+            group_id: 'anotherPartnerGroupId',
+            valid_from: '2000-01-01 00:00:00',
+            valid_to: '2030-01-01 00:00:00',
+          },
+        ]);
+      },
+    ]);
+    t.context.tracker.on('query', runner);
 
-  const result = await getAddresses({ req, user });
-  t.is(result.user.get('id'), 1);
-  t.is(result.req.swagger.params.lat.value, 15);
-  t.is(result.addresses.length, 3);
-  t.is(result.addresses.at(0).get('address'), 'Hans-Roth-Straße');
-});"
+    const { item: item1 } = mockHelper({
+      item: {
+        id: 'itemId1',
+        order_id: 'orderId1',
+        type: orderType.delivery,
+      },
+    });
+    const {
+      group,
+      item: item2,
+      taxRate,
+      itemVesselFee,
+    } = mockHelper({
+      group: {
+        id: 'logisticGroup',
+        type: groupType.LOGISTICS,
+        related: {
+          taxRates: [
+            {
+              id: 2,
+              tax_rate_id: 2,
+              tax: 10,
+              _pivot_group_id: 'logisticGroup',
+              valid_from: '2000-01-01 00:00:00',
+              valid_to: '2030-01-01 00:00:00',
+            },
+          ],
+        },
+      },
+      taxRate: {
+        id: 2,
+        tax: 10,
+        internal: 'reduced_tax_rate',
+      },
+      item: {
+        id: 'itemId2',
+        order_id: 'orderId2',
+        type: orderType.delivery,
+      },
+      itemVesselFee: {
+        id: 'vesselFeeId',
+        item_id: 'anotherItemId',
+        start_date: '2020-07-01',
+        end_date: null,
+      },
+    });
+    t.context.getItemsToBillStub.onCall(0).resolves([item1]);
+    t.context.getItemsToBillStub.onCall(1).resolves([item2]);
+    const result = await generateBillingInformationDto({
+      billingDocumentType: billingDocumentTypesStrings.CREDIT,
+      group,
+      invoiceDate: '2020-07-31',
+      dateOfCompletion: '2020-07-31',
+      billingPeriod: '2020-07',
+      isProforma: true,
+      projectAddress: null,
+      orderUuid: null,
+      userId: 'adminUserId',
+      isSummary: false,
+    });
+    runner.assertFinish();
+    t.is(result.billingDocumentType, billingDocumentTypesStrings.CREDIT);
+    t.deepEqual(result.group, group);
+    t.is(result.invoiceDate, '2020-07-31');
+    t.is(result.billingPeriod, '2020-07');
+    t.is(result.isProforma, true);
+    t.is(result.userId, 'adminUserId');
+    t.is(result.isSummary, false);
+    t.deepEqual(result.billedIndividualBillingDocumentPositionIds, []);
+    t.deepEqual(result.billedItemPricesBillingDocumentIds, []);
+    t.deepEqual(result.billedItemVesselFeeBillingDocumentIds, []);
+    t.deepEqual(result.billedVesselFeeBillingDocumentIds, []);
+    t.deepEqual(result.notBilledPrices, []);
+    t.is(result.projectAddress, null);
+    t.is(result.reversalBillingDocument, undefined);
+    t.is(result.cancellationType, undefined);
+    t.is(result.billingDocumentDto, undefined);
+    t.is(result.isIndividual, undefined);
+    t.is(result.taxRate.id, taxRate.get('id'));
+    t.deepEqual(result.items, [item1, item2]);
+    t.is(result.vesselFees.length, 1);
+    result.vesselFees.forEach((v) => {
+      t.is(v.get('id'), itemVesselFee.get('id'));
+    });
+  },
+);"
 `;
 
 exports[`should work as expected 2`] = `

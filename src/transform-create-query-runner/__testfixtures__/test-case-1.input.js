@@ -1,4 +1,10 @@
-test.serial(
+test.beforeEach((t) => {
+});
+
+test.afterEach.always((t) => {
+});
+
+test(
   'CREDIT-DOCUMENT: generate billingInformationDto for logistics with connected billing group (proforma)',
   async (t) => {
     const runner = createQueryRunner(t, [
