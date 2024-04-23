@@ -17,7 +17,6 @@ module.exports = function (fileInfo, api, options) {
   if (didTransform) {
     addStubUuidAndTimersImport(j, root);
     updateBeforeEachMethod(j, root);
-    updateAfterEachMethod(j, root);
     updateAfterEachAlwaysMethod(j, root);
   }
 
@@ -185,13 +184,13 @@ function updateBeforeEachMethod(j, root) {
 }
 
 /**
- * Add `restoreUuidAndTimers` function to the `afterEach` methods
+ * Add `restoreUuidAndTimers` function to the `test.afterEach.always` or `test.afterEach` methods.
  *
  * @param {import('jscodeshift').JSCodeshift} j - The jscodeshift API.
  * @param {import('jscodeshift').Collection<any>} root - The root node of the AST.
  */
-function updateAfterEachMethod(j, root) {
-  const selectedTestLifeCycleCallExpression = root.find(j.CallExpression, {
+function updateAfterEachAlwaysMethod(j, root) {
+  const afterEachCallExpression = root.find(j.CallExpression, {
     callee: {
       object: {
         name: 'test',
@@ -202,21 +201,7 @@ function updateAfterEachMethod(j, root) {
     },
   });
 
-  if (selectedTestLifeCycleCallExpression.length === 0) {
-    throw new Error('No `test.afterEach` method found.');
-  }
-
-  addFunctionToTestLifeCycleCallExpression(j, selectedTestLifeCycleCallExpression, 'restoreUuidAndTimers');
-}
-
-/**
- * Add `restoreUuidAndTimers` function to the `test.afterEach.always` methods
- *
- * @param {import('jscodeshift').JSCodeshift} j - The jscodeshift API.
- * @param {import('jscodeshift').Collection<any>} root - The root node of the AST.
- */
-function updateAfterEachAlwaysMethod(j, root) {
-  const selectedTestLifeCycleCallExpression = root.find(j.CallExpression, {
+  const afterEachAlwaysCallExpression = root.find(j.CallExpression, {
     callee: {
       object: {
         object: {
@@ -232,11 +217,12 @@ function updateAfterEachAlwaysMethod(j, root) {
     },
   });
 
-  if (selectedTestLifeCycleCallExpression.length === 0) {
-    throw new Error('No `test.afterEach.always` method found.');
+  if (afterEachCallExpression.length === 0 && afterEachAlwaysCallExpression.length === 0) {
+    throw new Error('No `test.afterEach` or `test.afterEach.always` methods found.');
   }
 
-  addFunctionToTestLifeCycleCallExpression(j, selectedTestLifeCycleCallExpression, 'restoreUuidAndTimers');
+  addFunctionToTestLifeCycleCallExpression(j, afterEachCallExpression, 'restoreUuidAndTimers');
+  addFunctionToTestLifeCycleCallExpression(j, afterEachAlwaysCallExpression, 'restoreUuidAndTimers');
 }
 
 function addFunctionToTestLifeCycleCallExpression(j, testLifeCycleCallExpression, functionNameToInsert) {
